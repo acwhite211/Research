@@ -33,8 +33,9 @@ C -> C_tv : [T x V] : C[t', v] = [D_v x D_v] matrix
 E -> E_t_v : [T x V] : E[t, v] -> [D_v x 1] column matrix
 L -> L : [TD x TD] : L[i, j] -> value
 R -> R : [TD x 1] column matrix
+W -> W : [TD x 1] column matrix
 w -> w_t_v : [T x V] : w[t, v] -> [D_v x 1] column vector of weights
-w_t -> w_t : [D x 1] : [D x 1] column vector of weights
+W_v -> W-v : [V] : W_v[v] -> [D_v x T] matrix where column t is w_t_v
 
 Output:
 W_t -> W_t : [D x T] : weights matrix
@@ -59,12 +60,13 @@ class Reg_MVMT(object):
         U = {}
         I = np.matrix(np.ones((T, V)))
         L = np.matrix((T * V, T * V))
+        w_t_v = {}
         W = np.matrix(np.zeros((T * D, 1)))
         W_t = np.matrix(np.zeros((D, T)))
-        W_v = np.matrix(np.ones((V, T)))
+        W_v = {}
         Omega = {}
 
-        # build y, X, U, and I
+        # build I
         for t in self.task_labels.keys():
             for v in self.views.keys():
                 if v in self.task_views[t]:
@@ -88,6 +90,7 @@ class Reg_MVMT(object):
                 X[t, v] = np.matrix(x)
                 y[t] = np.matrix(y_t).T
                 U[t, v] = np.matrix(u)
+                w[t, v] = np.martix(np.ones(X[t, v].shape[1], 1))
                     
         # initialize W0
         W0 = np.matrix(np.zeros((T * D, 1)))
@@ -170,11 +173,11 @@ class Reg_MVMT(object):
             # compute W
             W = L.I * R
 
-            # construct W_v [V x T]
+            # construct W_v
             W_v = []
             for v in range(V):
                 for t in range(T):
-                    W_v.extend(W_t[t, v].T.tolist()[0])
+                    W_v.append(w[t, v].T.tolist()[0])
             W_v = np.matrix(W_v).T
 
             # update Omega[v]
